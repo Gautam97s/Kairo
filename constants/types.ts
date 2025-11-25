@@ -1,18 +1,48 @@
 // constants/types.ts
 
-export type Priority = "NORMAL" | "HIGH" | "URGENT";
-export type Category = "WORK" | "MEETING" | "GYM" | "PERSONAL" | "OTHER";
-export type ViewState = "HOME" | "TASKS" | "CALENDAR" | "FOCUS";
+export enum Priority {
+  URGENT = "URGENT",
+  HIGH = "HIGH",
+  NORMAL = "NORMAL",
+  LOW = "LOW",
+}
 
-export type Task = {
+export enum Category {
+  WORK = "Work",
+  PERSONAL = "Personal",
+  GYM = "Gym",
+  STUDY = "Study",
+  MEETING = "Meeting",
+  ERRANDS = "Errands",
+  PROJECTS = "Projects",
+}
+
+export enum EnergyLevel {
+  HIGH = "High Energy",
+  MEDIUM = "Medium Energy",
+  LOW = "Low Energy",
+}
+
+export interface Task {
   id: string;
   title: string;
-  startTime: string;
-  endTime: string;
-  priority?: Priority;
-  category?: Category;
-  energy?: "LOW" | "MEDIUM" | "HIGH";
-  completed?: boolean;
+  startTime: string; // ISO string
+  endTime: string; // ISO string
+  priority: Priority;
+  category: Category;
+  completed: boolean;
   location?: string;
-  locked?: boolean;
-};
+  notes?: string;
+  energy?: EnergyLevel;
+  isRecurring?: boolean;
+  dependencies?: string[]; // IDs of prerequisite tasks
+  locked?: boolean; // If true, AI won't auto-reschedule without asking
+}
+
+export interface AIResponse {
+  suggestedTasks: Task[];
+  analysis: string;
+  action: "CREATE" | "RESCHEDULE" | "CONFLICT_RESOLVED" | "CHAT";
+}
+
+export type ViewState = "HOME" | "CALENDAR" | "ASSISTANT" | "FOCUS" | "TASKS";

@@ -1,75 +1,108 @@
 // components/NavBar.tsx
+import { BlurView } from "expo-blur";
+import { Calendar, CheckSquare, Clock, Home, Sparkles } from "lucide-react-native";
 import React from "react";
-import { View, TouchableOpacity, StyleSheet } from "react-native";
-import { Ionicons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import type { ViewState } from "../constants/types";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { ViewState } from "../constants/types";
 
-export default function NavBar({
-  currentView,
-  setView,
-  onMicPress,
-}: {
+interface NavBarProps {
   currentView: ViewState;
-  setView: (v: ViewState) => void;
+  setView: (view: ViewState) => void;
   onMicPress: () => void;
-}) {
+}
+
+export default function NavBar({ currentView, setView, onMicPress }: NavBarProps) {
+  const NavItem = ({ view, Icon }: { view: ViewState; Icon: any }) => (
+    <TouchableOpacity
+      onPress={() => setView(view)}
+      style={[
+        styles.navItem,
+        currentView === view ? styles.navItemActive : styles.navItemInactive,
+      ]}
+      activeOpacity={0.8}
+    >
+      <Icon
+        size={22}
+        strokeWidth={currentView === view ? 2.5 : 2}
+        color={currentView === view ? "#000" : "#9ca3af"}
+      />
+    </TouchableOpacity>
+  );
+
   return (
-    <View style={styles.wrap}>
-      <TouchableOpacity style={styles.btn} onPress={() => setView("HOME")}>
-        <Ionicons name="home-outline" size={20} color={currentView === "HOME" ? "#0b1730" : "#94a3b8"} />
-      </TouchableOpacity>
+    <View style={styles.navBar}>
+      <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="light" />
+      <View style={styles.navContent}>
+        <NavItem view="HOME" Icon={Home} />
+        <NavItem view="TASKS" Icon={CheckSquare} />
 
-      <TouchableOpacity style={styles.btn} onPress={() => setView("TASKS")}>
-        <Feather name="check-square" size={18} color={currentView === "TASKS" ? "#0b1730" : "#94a3b8"} />
-      </TouchableOpacity>
+        {/* Center Floating Action Button */}
+        <TouchableOpacity
+          onPress={onMicPress}
+          style={styles.fab}
+          activeOpacity={0.9}
+        >
+          <Sparkles size={28} color="#fff" fill="#fff" />
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.fab} onPress={onMicPress} activeOpacity={0.9}>
-        <View style={styles.fabInner}>
-          <MaterialCommunityIcons name="star-four-points" size={20} color="#fff" />
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => setView("CALENDAR")}>
-        <Feather name="calendar" size={18} color={currentView === "CALENDAR" ? "#0b1730" : "#94a3b8"} />
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.btn} onPress={() => setView("FOCUS")}>
-        <Ionicons name="time-outline" size={20} color={currentView === "FOCUS" ? "#0b1730" : "#94a3b8"} />
-      </TouchableOpacity>
+        <NavItem view="CALENDAR" Icon={Calendar} />
+        <NavItem view="FOCUS" Icon={Clock} />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
+  navBar: {
     position: "absolute",
-    bottom: 18,
-    left: 12,
-    right: 12,
-    height: 74,
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
+    bottom: 24,
+    left: 24,
+    right: 24,
+    height: 80,
+    borderRadius: 40,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
     zIndex: 50,
   },
-  btn: {
-    width: 54,
-    height: 54,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.92)",
+  navContent: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+  },
+  navItem: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: "center",
     justifyContent: "center",
   },
+  navItemActive: {
+    backgroundColor: "rgba(0,0,0,0.08)",
+    transform: [{ scale: 1.1 }],
+  },
+  navItemInactive: {},
   fab: {
-    marginBottom: 8,
-  },
-  fabInner: {
-    width: 64,
-    height: 64,
-    borderRadius: 36,
-    backgroundColor: "#0b1730",
+    width: 74,
+    height: 74,
+    borderRadius: 40,
+    backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
-    elevation: 6,
+    borderWidth: 4,
+    borderColor: "#fff",
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 12,
   },
 });
