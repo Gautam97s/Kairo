@@ -1,18 +1,20 @@
 // components/TaskCard.tsx
-import React, { useEffect, useRef } from "react";
-import { Animated, View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import React, { useEffect, useRef } from "react";
+import { Animated, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { Task } from "../constants/types";
 
 export default function TaskCard({
   task,
   index = 0,
   onToggleComplete,
+  onDelete,
   accentColor = "#cbd5e1",
 }: {
   task: Task;
   index?: number;
   onToggleComplete: () => void;
+  onDelete?: () => void;
   accentColor?: string;
 }) {
   const anim = useRef(new Animated.Value(0)).current;
@@ -54,9 +56,16 @@ export default function TaskCard({
         </View>
 
         {!task.completed && (
-          <TouchableOpacity onPress={onToggleComplete} style={styles.completeBtn}>
-            <Feather name="check" size={14} color="#fff" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+            <TouchableOpacity onPress={onToggleComplete} style={styles.completeBtn}>
+              <Feather name="check" size={14} color="#fff" />
+            </TouchableOpacity>
+            {onDelete && (
+              <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
+                <Feather name="x" size={14} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
     </Animated.View>
@@ -93,6 +102,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "flex-start",
-    marginTop: 10,
+    marginTop: 0,
+  },
+  deleteBtn: {
+    width: 44,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "#ef4444",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

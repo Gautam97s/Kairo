@@ -1,6 +1,6 @@
 // app/(tabs)/tasks.tsx
 import { Feather } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
     ScrollView,
     StyleSheet,
@@ -9,28 +9,25 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AddTaskModal from "../../components/AddTaskModal";
+import FilterModal from "../../components/FilterModal";
 import TaskCard from "../../components/TaskCard";
-import { INITIAL_TASKS } from "../../constants/mockTasks";
 import { Task } from "../../constants/types";
+import { useTasks } from "../../context/TaskContext";
 
 export default function TasksScreen() {
-    const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+    const { tasks, addTask, deleteTask, toggleComplete } = useTasks();
     const [filter, setFilter] = useState("All");
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [isFilterModalVisible, setFilterModalVisible] = useState(false);
 
-    const categories = [
-        "All",
-        "Today",
-        "Scheduled",
-        "High Priority",
-        "Completed",
-        "Work",
-        "Personal",
-        "Gym",
-        "Study",
-        "Meeting",
-        "Errands",
-        "Projects",
-    ];
+    const categories = useMemo(() => {
+        const fixed = ["All", "Today", "Scheduled", "High Priority", "Completed"];
+        const dynamic = Array.from(new Set(tasks.map((t) => t.category))).filter(
+            (c) => !fixed.includes(c)
+        );
+        return [...fixed, ...dynamic];
+    }, [tasks]);
 
     const filtered = tasks.filter((task) => {
         if (filter === "All") return true;
@@ -41,20 +38,14 @@ export default function TasksScreen() {
             return (
                 new Date(task.startTime).getDate() === new Date().getDate()
             );
-        if (
-            ["Work", "Personal", "Gym", "Study", "Meeting", "Errands", "Projects"].includes(filter)
-        ) {
-            return task.category === filter;
-        }
-        return true;
+        if (filter === "Scheduled") return new Date(task.startTime) > new Date();
+
+        // If it's not a special filter, assume it's a category
+        return task.category === filter;
     });
 
-    const toggleComplete = (id: string) => {
-        setTasks((prev) =>
-            prev.map((t) =>
-                t.id === id ? { ...t, completed: !t.completed } : t
-            )
-        );
+    const handleAddTask = (newTask: Partial<Task>) => {
+        addTask(newTask);
     };
 
     return (
@@ -74,43 +65,20 @@ export default function TasksScreen() {
                             <Feather name="search" size={18} color="#64748b" />
                         </TouchableOpacity>
 
-                        <TouchableOpacity style={styles.headerIcon}>
-                            <Feather name="filter" size={18} color="#64748b" />
+                        <TouchableOpacity
+                            style={styles.headerIcon}
+                            onPress={() => setFilterModalVisible(true)}
+                        >
+                            <Feather name="sliders" size={18} color="#64748b" />
                         </TouchableOpacity>
                     </View>
                 </View>
 
-                {/* CATEGORY FILTERS — FIXED */}
-                <View style={{ flexGrow: 0 }}>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.filterScroll}
-                    >
-                        {categories.map((cat) => {
-                            const isActive = filter === cat;
-
-                            return (
-                                <TouchableOpacity
-                                    key={cat}
-                                    onPress={() => setFilter(cat)}
-                                    style={[
-                                        styles.filterBtn,
-                                        isActive && styles.filterBtnActive,
-                                    ]}
-                                >
-                                    <Text
-                                        style={[
-                                            styles.filterText,
-                                            isActive && styles.filterTextActive,
-                                        ]}
-                                    >
-                                        {cat}
-                                    </Text>
-                                </TouchableOpacity>
-                            );
-                        })}
-                    </ScrollView>
+                {/* Current Filter Display */}
+                <View style={styles.filterDisplay}>
+                    <Text style={styles.filterDisplayText}>
+                        Showing: <Text style={{ fontWeight: '700', color: '#0b1730' }}>{filter}</Text>
+                    </Text>
                 </View>
 
                 {/* TASK LIST */}
@@ -120,21 +88,45 @@ export default function TasksScreen() {
                     contentContainerStyle={{ paddingBottom: 120 }}
                 >
                     <View>
-                        {filtered.map((task) => (
-                            <TaskCard
-                                key={task.id}
-                                task={task}
-                                accentColor="#3b82f6"
-                                onToggleComplete={() => toggleComplete(task.id)}
-                            />
-                        ))}
+                        {filtered.length === 0 ? (
+                            <View style={{ alignItems: 'center', marginTop: 40 }}>
+                                <Feather name="inbox" size={48} color="#cbd5e1" />
+                                <Text style={{ marginTop: 12, color: '#64748b', fontSize: 16 }}>
+                                    No tasks found for "{filter}"
+                                </Text>
+                            </View>
+                        ) : (
+                            filtered.map((task) => (
+                                <TaskCard
+                                    key={task.id}
+                                    task={task}
+                                    accentColor="#3b82f6"
+                                    onToggleComplete={() => toggleComplete(task.id)}
+                                    onDelete={() => deleteTask(task.id)}
+                                />
+                            ))
+                        )}
                     </View>
                 </ScrollView>
 
                 {/* FAB */}
-                <TouchableOpacity style={styles.fab}>
+                <TouchableOpacity style={styles.fab} onPress={() => setModalVisible(true)}>
                     <Feather name="plus" size={34} color="#0b1730" />
                 </TouchableOpacity>
+
+                <AddTaskModal
+                    visible={isModalVisible}
+                    onClose={() => setModalVisible(false)}
+                    onAddTask={handleAddTask}
+                />
+
+                <FilterModal
+                    visible={isFilterModalVisible}
+                    onClose={() => setFilterModalVisible(false)}
+                    categories={categories}
+                    selectedFilter={filter}
+                    onSelectFilter={setFilter}
+                />
             </View>
         </SafeAreaView>
     );
@@ -184,43 +176,14 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
 
-    filterScroll: {
-        marginTop: 4,
-        marginBottom: 12,
-        paddingRight: 16,
-        paddingBottom: 8,
+    filterDisplay: {
+        marginTop: 16,
+        marginBottom: 8,
     },
 
-    filterBtn: {
-        paddingVertical: 0,
-        paddingHorizontal: 16,
-        borderRadius: 22,
-        backgroundColor: "#f1f5f9",
-        borderWidth: 1,
-        borderColor: "#e2e8f0",
-        marginRight: 8,
-        height: 40,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    filterBtnActive: {
-        backgroundColor: "#0b1730",
-        borderColor: "#0b1730",
-    },
-
-    filterText: {
-        fontSize: 13,
-        fontWeight: "600",
-        color: "#475569",
-
-        // Prevent forcing the chip to stretch
-        flexShrink: 1,
-        textAlign: "center",
-    },
-
-    filterTextActive: {
-        color: "#fff",
+    filterDisplayText: {
+        fontSize: 14,
+        color: "#64748b",
     },
 
     fab: {
