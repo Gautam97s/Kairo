@@ -70,7 +70,7 @@ export default function HomeScreen() {
               </View>
 
               <View>
-                <Text style={[styles.cardLabel, { textAlign: 'center' }]}>Now Focus</Text>
+                <Text style={[styles.cardLabel, { textAlign: 'left' }]}>Now Focus</Text>
                 <Text style={styles.focusTitle} numberOfLines={2}>
                   {nextTask ? nextTask.title : "No Active Task"}
                 </Text>
@@ -88,7 +88,7 @@ export default function HomeScreen() {
                     </View>
                   </View>
                 )}
-                <View style={{ marginTop: 17, right: 0, left: 56 }}>
+                <View style={{ marginTop: 14, right: 0, left: 56 }}>
                   <MiniChart color="#0f172a" />
                 </View>
               </View>
@@ -114,7 +114,7 @@ export default function HomeScreen() {
                 ) : (
                   <Text style={styles.emptyText}>Clear Schedule</Text>
                 )}
-                <View style={{ marginTop: 12 }}>
+                <View style={{ marginTop: 29, right: 0, left: 60 }}>
                   <MiniChart color="#0f172a" />
                 </View>
               </View>
@@ -126,7 +126,7 @@ export default function HomeScreen() {
             <View style={styles.listSection}>
               <Text style={styles.listHeader}>Later Today</Text>
               {upcomingTasks.slice(1).map(task => (
-                <TouchableOpacity key={task.id} style={styles.listItem}>
+                <View key={task.id} style={styles.listItem}>
                   <View style={styles.listIconContainer}>
                     <View style={styles.listDot} />
                   </View>
@@ -136,7 +136,7 @@ export default function HomeScreen() {
                       {new Date(task.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </View>
-                </TouchableOpacity>
+                </View>
               ))}
             </View>
           )}
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
 
   blackContainer: {
     flex: 1,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#000000ff',
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     padding: 20,

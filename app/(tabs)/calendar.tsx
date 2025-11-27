@@ -1,4 +1,3 @@
-// app/(tabs)/calendar.tsx
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {

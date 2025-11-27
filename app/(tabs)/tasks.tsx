@@ -1,4 +1,3 @@
-// app/(tabs)/tasks.tsx
 import { Feather } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import {
@@ -61,10 +60,6 @@ export default function TasksScreen() {
                     </View>
 
                     <View style={styles.headerButtons}>
-                        <TouchableOpacity style={styles.headerIcon}>
-                            <Feather name="search" size={18} color="#64748b" />
-                        </TouchableOpacity>
-
                         <TouchableOpacity
                             style={styles.headerIcon}
                             onPress={() => setFilterModalVisible(true)}
@@ -139,26 +134,29 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
     },
 
     headerRow: {
-        marginTop: 0,
+        marginTop: 10,
+        marginBottom: 10,
         flexDirection: "row",
         justifyContent: "space-between",
-        alignItems: "flex-start",
+        alignItems: "center",
     },
 
     title: {
-        fontSize: 32,
+        fontSize: 24,
         fontWeight: "700",
         color: "#0b1730",
     },
 
     subtitle: {
-        marginTop: 4,
+        marginTop: 2,
         color: "#64748b",
     },
+
+
 
     headerButtons: {
         flexDirection: "row",
@@ -188,7 +186,7 @@ const styles = StyleSheet.create({
 
     fab: {
         position: "absolute",
-        bottom: 26,
+        bottom: 120,
         right: 20,
         width: 70,
         height: 70,

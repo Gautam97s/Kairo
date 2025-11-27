@@ -24,14 +24,22 @@ export default function NavBar({ currentView, setView, onMicPress }: NavBarProps
       <Icon
         size={22}
         strokeWidth={currentView === view ? 2.5 : 2}
-        color={currentView === view ? "#000" : "#9ca3af"}
+        color={currentView === view ? "#000" : "#64748b"}
       />
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.navBar}>
-      <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="light" />
+    <View style={styles.container}>
+      {/* Shadow Layer */}
+      <View style={styles.shadowLayer} />
+
+      {/* Blur Background */}
+      <View style={styles.blurContainer}>
+        <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="light" />
+      </View>
+
+      {/* Content */}
       <View style={styles.navContent}>
         <NavItem view="HOME" Icon={Home} />
         <NavItem view="TASKS" Icon={CheckSquare} />
@@ -53,22 +61,33 @@ export default function NavBar({ currentView, setView, onMicPress }: NavBarProps
 }
 
 const styles = StyleSheet.create({
-  navBar: {
+  container: {
     position: "absolute",
     bottom: 24,
     left: 24,
     right: 24,
     height: 80,
+    zIndex: 50,
+    // Ensure overflow is visible so FAB can protrude
+    overflow: 'visible',
+  },
+  shadowLayer: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 40,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.4)",
+    backgroundColor: "#fff",
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 4 },
     elevation: 8,
-    zIndex: 50,
+    opacity: 0,
+  },
+  blurContainer: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 40,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
   },
   navContent: {
     flex: 1,
@@ -76,6 +95,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
+    // Ensure content (FAB) isn't clipped
+    overflow: 'visible',
+    zIndex: 60,
   },
   navItem: {
     width: 48,
@@ -85,24 +107,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   navItemActive: {
-    backgroundColor: "rgba(0,0,0,0.08)",
+    backgroundColor: "rgba(0,0,0,0.05)",
     transform: [{ scale: 1.1 }],
   },
   navItemInactive: {},
   fab: {
-    width: 74,
-    height: 74,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: "#000",
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 4,
     borderColor: "#fff",
-    marginBottom: 20,
+    top: -32, // Exactly half height to sit on the edge
     shadowColor: "#000",
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 12,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    zIndex: 70, // Ensure it's on top
   },
 });

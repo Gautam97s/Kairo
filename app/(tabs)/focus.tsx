@@ -1,4 +1,3 @@
-// app/(tabs)/focus.tsx
 import { Pause, Play, RotateCcw, Zap } from "lucide-react-native";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -110,6 +109,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 24,
     paddingBottom: 100,
+    paddingTop: 10,
   },
   labelSection: {
     alignItems: "center",
