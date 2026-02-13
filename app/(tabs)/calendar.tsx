@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Dimensions,
   FlatList,
   StyleSheet,
   Text,
@@ -46,6 +47,9 @@ export default function CalendarScreen() {
   // Find index of today to scroll to initially
   const todayIndex = dates.findIndex((d) => isSameDay(d, new Date()));
 
+  const headerListRef = useRef<FlatList>(null);
+  const isProgrammaticScroll = useRef(false);
+
   useEffect(() => {
     // Scroll to today on mount
     if (flatListRef.current && todayIndex !== -1) {
@@ -54,47 +58,92 @@ export default function CalendarScreen() {
           index: todayIndex,
           animated: false,
         });
+        headerListRef.current?.scrollToIndex({
+          index: todayIndex,
+          animated: false,
+          viewPosition: 0.5,
+        });
       }, 100);
     }
   }, []);
 
   // Sync header when scrolling
   const handleScroll = (event: any) => {
+    // If we are scrolling programmatically, do not update selectedDate based on scroll position
+    if (isProgrammaticScroll.current) return;
+
     const offsetY = event.nativeEvent.contentOffset.y;
-    const index = Math.round(offsetY / 1800);
+    // Use Math.floor and add half screen height to find the item in the middle of the screen
+    const screenHeight = Dimensions.get('window').height;
+    const index = Math.floor((offsetY + screenHeight / 2) / 1800);
 
     if (index >= 0 && index < dates.length) {
       const date = dates[index];
       if (!isSameDay(date, selectedDate)) {
         setSelectedDate(date);
+        headerListRef.current?.scrollToIndex({
+          index,
+          animated: true,
+          viewPosition: 0.5,
+        });
       }
     }
   };
 
   const handleDayPress = (date: Date) => {
+    isProgrammaticScroll.current = true;
     setSelectedDate(date);
     const index = dates.findIndex((d) => isSameDay(d, date));
     if (index !== -1) {
       flatListRef.current?.scrollToIndex({ index, animated: true });
+      headerListRef.current?.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+
+      // Reset the flag after a timeout to ensure animation completes
+      // We also use onMomentumScrollEnd but a timeout is a good fallback
+      setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 500);
     }
   };
 
-  // Generate week days for the header based on selectedDate
-  const getWeekDays = (baseDate: Date) => {
-    const days = [];
-    const start = new Date(baseDate);
-    // Center the selected date roughly
-    start.setDate(baseDate.getDate() - 3);
+  const renderHeaderItem = ({ item, index }: { item: Date; index: number }) => {
+    const isSelected = isSameDay(item, selectedDate);
+    const isToday = isSameDay(item, new Date());
+    const dayName = item.toLocaleDateString("en-US", {
+      weekday: "narrow",
+    });
+    const dayNum = item.getDate();
 
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      days.push(d);
-    }
-    return days;
+    return (
+      <TouchableOpacity
+        style={[styles.day, isSelected && styles.dayActive]}
+        onPress={() => handleDayPress(item)}
+      >
+        <Text
+          style={[
+            styles.dayLabel,
+            isSelected && styles.dayLabelActive,
+            isToday && !isSelected && { color: "#3b82f6" },
+          ]}
+        >
+          {dayName}
+        </Text>
+        <Text
+          style={[
+            styles.dayNumber,
+            isSelected && styles.dayNumberActive,
+            isToday && !isSelected && { color: "#3b82f6" },
+          ]}
+        >
+          {dayNum}
+        </Text>
+      </TouchableOpacity>
+    );
   };
-
-  const headerDays = getWeekDays(selectedDate);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -106,42 +155,21 @@ export default function CalendarScreen() {
       </View>
 
       {/* Day Selector Header */}
-      <View style={styles.days}>
-        {headerDays.map((date, i) => {
-          const isSelected = isSameDay(date, selectedDate);
-          const isToday = isSameDay(date, new Date());
-          const dayName = date.toLocaleDateString("en-US", {
-            weekday: "narrow",
-          });
-          const dayNum = date.getDate();
-
-          return (
-            <TouchableOpacity
-              key={i}
-              style={[styles.day, isSelected && styles.dayActive]}
-              onPress={() => handleDayPress(date)}
-            >
-              <Text
-                style={[
-                  styles.dayLabel,
-                  isSelected && styles.dayLabelActive,
-                  isToday && !isSelected && { color: "#3b82f6" },
-                ]}
-              >
-                {dayName}
-              </Text>
-              <Text
-                style={[
-                  styles.dayNumber,
-                  isSelected && styles.dayNumberActive,
-                  isToday && !isSelected && { color: "#3b82f6" },
-                ]}
-              >
-                {dayNum}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+      <View style={styles.daysContainer}>
+        <FlatList
+          ref={headerListRef}
+          data={dates}
+          keyExtractor={(item) => item.toISOString()}
+          renderItem={renderHeaderItem}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          getItemLayout={(data, index) => ({
+            length: 60, // Fixed width for day item including margin/padding
+            offset: 60 * index,
+            index,
+          })}
+          initialScrollIndex={todayIndex}
+        />
       </View>
 
       {/* Infinite Scroll List */}
@@ -151,6 +179,9 @@ export default function CalendarScreen() {
         keyExtractor={(item) => item.toISOString()}
         renderItem={({ item }) => <DayTimeline date={item} tasks={tasks} />}
         onScroll={handleScroll}
+        onMomentumScrollEnd={() => { isProgrammaticScroll.current = false; }}
+        onScrollBeginDrag={() => { isProgrammaticScroll.current = false; }}
+        onScrollAnimationEnd={() => { isProgrammaticScroll.current = false; }}
         viewabilityConfig={viewabilityConfig}
         getItemLayout={(data, index) => ({
           length: 1800, // Approx height of DayTimeline (24 hours * 70px + padding)
@@ -188,20 +219,18 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
 
-  days: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  daysContainer: {
     marginBottom: 10,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
+    paddingBottom: 10,
   },
   day: {
     alignItems: "center",
     padding: 8,
     borderRadius: 14,
-    minWidth: 40,
+    width: 60, // Fixed width for calculation
+    marginHorizontal: 0,
   },
   dayActive: {
     backgroundColor: "#000",
