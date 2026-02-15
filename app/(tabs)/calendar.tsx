@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Dimensions,
@@ -149,9 +149,7 @@ export default function CalendarScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Schedule</Text>
-        <View style={styles.button}>
-          <Feather name="more-horizontal" size={18} />
-        </View>
+
       </View>
 
       {/* Day Selector Header */}
@@ -213,11 +211,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: "700", color: "#0b1730" },
 
-  button: {
-    backgroundColor: "#f1f5f9",
-    padding: 10,
-    borderRadius: 14,
-  },
+
 
   daysContainer: {
     marginBottom: 10,

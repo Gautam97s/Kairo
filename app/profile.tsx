@@ -1,22 +1,41 @@
 import { Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import ActivityHeatmap from '../components/ActivityHeatmap';
 import { useAuth } from '../context/AuthContext';
+import { useTasks } from '../context/TaskContext';
 import { useTheme } from '../context/ThemeContext';
+import { supabase } from '../lib/supabase';
 
 export default function ProfileScreen() {
     const { user, signOut } = useAuth();
     const { colors } = useTheme();
-    const [name, setName] = useState('Gautam'); // Placeholder until we persist names
+    const { tasks } = useTasks();
+
+    // Initialize with existing metadata name or default
+    const [name, setName] = useState(user?.user_metadata?.full_name || 'Gautam');
     const [loading, setLoading] = useState(false);
 
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
+        if (!name.trim()) {
+            Alert.alert('Error', 'Name cannot be empty');
+            return;
+        }
+
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
+        try {
+            const { error } = await supabase.auth.updateUser({
+                data: { full_name: name }
+            });
+
+            if (error) throw error;
+
             Alert.alert('Success', 'Profile updated successfully!');
-        }, 1000);
+        } catch (error: any) {
+            Alert.alert('Error', error.message || 'Failed to update profile');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -50,6 +69,8 @@ export default function ProfileScreen() {
                         onChangeText={setName}
                     />
                 </View>
+
+                <ActivityHeatmap tasks={tasks} />
 
                 <TouchableOpacity
                     style={[styles.button, { backgroundColor: colors.primary }]}
