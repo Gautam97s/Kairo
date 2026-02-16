@@ -127,15 +127,20 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     };
 
     const toggleComplete = async (id: string) => {
-        const task = tasks.find((t) => t.id === id);
-        if (!task) return;
+        let newStatus: boolean | undefined;
 
-        const newStatus = !task.completed;
+        // Optimistic update using functional state update pattern
+        setTasks((prev) => {
+            const task = prev.find((t) => t.id === id);
+            if (!task) return prev; // Should not happen if id is valid
 
-        // Optimistic update
-        setTasks((prev) =>
-            prev.map((t) => (t.id === id ? { ...t, completed: newStatus } : t))
-        );
+            newStatus = !task.completed;
+            // We know newStatus is boolean here because !boolean is boolean
+            return prev.map((t) => (t.id === id ? { ...t, completed: newStatus as boolean } : t));
+        });
+
+        // If task wasn't found, newStatus will be undefined, so we exit
+        if (newStatus === undefined) return;
 
         const { error } = await supabase
             .from('tasks')
@@ -144,7 +149,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
         if (error) {
             console.error('Error updating task:', error);
-            // Revert
+            Alert.alert('Error', 'Could not update task status');
+            // Revert using functional update
             setTasks((prev) =>
                 prev.map((t) => (t.id === id ? { ...t, completed: !newStatus } : t))
             );

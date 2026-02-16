@@ -115,7 +115,7 @@ export default function SideMenu({ visible, onClose }: SideMenuProps) {
           <View style={styles.profileSection}>
             <View style={[styles.avatar, { borderColor: colors.border }]}>
               <Text style={[styles.avatarText, { color: colors.text }]}>
-                {user?.email?.[0].toUpperCase() || 'U'}
+                {(user?.email && user.email[0] ? user.email[0] : 'U').toUpperCase()}
               </Text>
             </View>
             <Text style={[styles.email, { color: colors.text }]}>{user?.email}</Text>

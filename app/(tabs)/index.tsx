@@ -5,6 +5,7 @@ import GlassCard from "../../components/GlassCard";
 import KairoLogo from "../../components/KairoLogo";
 import SideMenu from "../../components/SideMenu";
 import { Task } from "../../constants/types";
+import { useAuth } from "../../context/AuthContext";
 import { useTasks } from "../../context/TaskContext";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -12,7 +13,8 @@ export default function HomeScreen() {
   const { tasks } = useTasks();
   const { colors, theme } = useTheme();
   const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const userName = "Gautam";
+  const { user } = useAuth(); // Assuming useAuth is exported from valid path or accessible context
+  const userName = user?.user_metadata?.displayName || user?.email?.split('@')[0] || "User";
 
   const onTaskComplete = (id: string) => {
     console.log("Complete task", id);
@@ -23,10 +25,15 @@ export default function HomeScreen() {
   };
 
   const nextTask = useMemo(() => {
-    return (
-      tasks.find((t: Task) => !t.completed && new Date(t.endTime) > new Date()) ||
-      tasks[0]
-    );
+    const now = new Date();
+    // Filter for incomplete tasks that are in the future
+    const upcoming = tasks.filter((t: Task) => !t.completed && new Date(t.endTime) > now);
+
+    // Sort by start time ascending to get the soonest one
+    // We create a copy to avoid mutating if sort does in-place (though filter creates new array)
+    upcoming.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+    return upcoming[0] || null;
   }, [tasks]);
 
   const upcomingTasks = useMemo(() => {
@@ -50,7 +57,9 @@ export default function HomeScreen() {
 
           <View>
             <View style={styles.dateRow}>
-              <Text style={[styles.dateText, { color: colors.secondary }]}>Oct 15, 2025</Text>
+              <Text style={[styles.dateText, { color: colors.secondary }]}>
+                {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </Text>
               <View style={[styles.dateDot, { backgroundColor: colors.border }]} />
               <Text style={[styles.dateText, { color: colors.secondary }]}>Today</Text>
             </View>
@@ -100,7 +109,7 @@ export default function HomeScreen() {
                         {new Date(nextTask.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </Text>
                       <View style={styles.miniTag}>
-                        <Text style={styles.miniTagText}>High</Text>
+                        <Text style={styles.miniTagText}>{nextTask.priority || "Normal"}</Text>
                       </View>
                     </View>
                   )}
